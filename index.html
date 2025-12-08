@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provider Botz - Video Downloader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Variables for Theming */
+        :root {
+            --bg-light: #f0f2f5;
+            --bg-dark: #0f0f10;
+            --panel-light: #ffffff;
+            --panel-dark: #1c1c1e;
+            --text-light: #1c1c1e;
+            --text-dark: #e4e6eb;
+            --muted-light: #65676b;
+            --muted-dark: #b0b3b8;
+            --accent1-light: #1877f2; /* Blue */
+            --accent1-dark: #ff3b5c; /* Red */
+            --accent2-light: #34a853;
+            --accent2-dark: #34a853;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+            --glass-light: rgba(255, 255, 255, 0.7);
+            --glass-dark: rgba(40, 40, 40, 0.5);
+            --success: #28a745;
+            --error: #dc3545;
+
+            /* Default to dark theme */
+            --bg: var(--bg-dark);
+            --panel: var(--panel-dark);
+            --text: var(--text-dark);
+            --muted: var(--muted-dark);
+            --accent1: var(--accent1-dark);
+            --accent2: var(--accent2-dark);
+            --shadow: var(--shadow-dark);
+            --glass: var(--glass-dark);
+        }
+
+        body.light-theme {
+            --bg: var(--bg-light);
+            --panel: var(--panel-light);
+            --text: var(--text-light);
+            --muted: var(--muted-light);
+            --accent1: var(--accent1-light);
+            --accent2: var(--accent2-light);
+            --shadow: var(--shadow-light);
+            --glass: var(--glass-light);
+        }
+
+        /* Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Header & Theme Toggle */
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 24px;
+        }
+        .logo span {
+            color: var(--accent1);
+        }
+
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .theme-switch {
+            display: inline-block;
+            height: 28px;
+            position: relative;
+            width: 50px;
+        }
+
+        .theme-switch input { display:none; }
+
+        .slider {
+            background-color: #424244;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            background-color: #fff;
+            bottom: 4px;
+            content: "";
+            height: 20px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 20px;
+            border-radius: 50%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-moon-fill" viewBox="0 0 16 16"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        input:checked + .slider { background-color: var(--accent1); }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-sun-fill" viewBox="0 0 16 16"><path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707z"/></svg>');
+        }
+
+        /* Main Content */
+        .main-content {
+            text-align: center;
+            margin-top: 40px;
+            width: 100%;
+            z-index: 10;
+        }
+        .main-content h1 { font-size: 36px; font-weight: 800; line-height: 1.2; }
+        .main-content h1 .highlight { color: var(--accent1); }
+        .main-content p { font-size: 16px; color: var(--muted); margin: 15px auto 30px; max-width: 380px; line-height: 1.6; }
+
+        /* Search Box */
+        .search-container { width: 100%; }
+        .search-box {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            background: var(--glass);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 8px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px var(--shadow);
+            position: relative;
+        }
+        .search-box .icon { padding: 0 10px; color: var(--accent1); }
+        .search-box input { flex-grow: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 16px; padding: 10px 5px; }
+        .search-box input::placeholder { color: var(--muted); }
+        .search-box button.search-btn { background: var(--accent1); color: white; border: none; border-radius: 8px; padding: 12px 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .search-box button.search-btn:hover { transform: scale(1.05); }
+        .search-box button.search-btn:disabled { background-color: var(--muted); cursor: not-allowed; transform: none; }
+        .input-actions { display: flex; align-items: center; gap: 5px; margin-left: 5px; }
+        .input-actions button { background: none; border: none; color: var(--muted); cursor: pointer; padding: 5px; }
+
+        /* Floating Icons */
+        .floating-icon { position: absolute; width: 50px; height: 50px; background: var(--glass); border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); box-shadow: 0 4px 15px var(--shadow); animation: float 6s ease-in-out infinite; z-index: 1; }
+        .floating-icon svg { width: 28px; height: 28px; }
+        .icon-twitter { top: 15%; left: 5%; animation-delay: 0s; }
+        .icon-youtube { top: 20%; right: 5%; animation-delay: 1s; }
+        .icon-instagram { top: 60%; left: 10%; animation-delay: 2s; }
+        .icon-facebook { top: 65%; right: 10%; animation-delay: 3s; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
+        
+        /* Footer */
+        footer { margin-top: auto; padding: 40px 0 20px; text-align: center; color: var(--muted); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+        /* Results Section */
+        #results { width: 100%; margin-top: 30px; display: flex; flex-direction: column; gap: 15px; animation: fadeIn 0.5s ease-in-out; }
+        .video-info-card { background: var(--panel); border-radius: 12px; padding: 15px; display: flex; gap: 15px; align-items: center; }
+        .video-info-card img { width: 120px; height: 67.5px; border-radius: 8px; object-fit: cover; }
+        .video-info-card .details h3 { font-size: 16px; font-weight: 600; line-height: 1.3; }
+        .video-info-card .details p { font-size: 14px; color: var(--muted); margin-top: 5px; }
+        #playerContainer { width: 100%; margin-top: 10px; }
+        #playerContainer video, #playerContainer audio { width: 100%; border-radius: 8px; }
+        .formats-container h4 { font-size: 16px; margin-bottom: 10px; padding-left: 5px; }
+        .format-list { display: flex; flex-direction: column; gap: 8px; }
+        .format-item { background: var(--panel); border-radius: 10px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .format-item .label { font-weight: 600; font-size: 14px; }
+        .format-item .quality { font-size: 12px; color: var(--muted); }
+        .format-item .actions button, .format-item .actions a { background: transparent; border: 1px solid var(--accent1); color: var(--accent1); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; margin-left: 8px; text-decoration: none; }
+        .empty-state { color: var(--muted); text-align: center; padding: 20px; }
+        
+        /* Toast Notifications */
+        #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 10px; align-items: center;}
+        .toast { padding: 12px 20px; border-radius: 8px; color: white; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2); opacity: 0; transform: translateY(20px); animation: slideIn 0.3s forwards; }
+        .toast.success { background-color: var(--success); }
+        .toast.error { background-color: var(--error); }
+        @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideOut { to { opacity: 0; transform: translateY(20px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        #loader { width: 24px; height: 24px; border: 3px solid var(--muted); border-top-color: var(--accent1); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .floating-icon { transform: scale(0.8); }
+            .icon-twitter { top: 12%; left: -5%; }
+            .icon-youtube { top: 15%; right: -5%; }
+            .icon-instagram { top: 55%; left: 0%; }
+            .icon-facebook { top: 60%; right: 0%; }
+            .main-content h1 { font-size: 32px; }
+        }
+    </style>
+</head>
+<body class="dark-theme">
+
+    <div id="toast-container"></div>
+
+    <div class="container">
+        <!-- Floating Icons -->
+        <div class="floating-icon icon-twitter"><svg role="img" viewBox="0 0 24 24" fill="#1DA1F2" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 7.184L18.901 1.153zm-1.61 19.7h2.663L5.45 2.544H2.61l14.68 18.309z"/></svg></div>
+        <div class="floating-icon icon-youtube"><svg role="img" viewBox="0 0 24 24" fill="#FF0000" xmlns="http://www.w3.org/2000/svg"><title>YouTube</title><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></div>
+        <div class="floating-icon icon-instagram"><svg role="img" viewBox="0 0 24 24" fill="url(#insta-gradient)" xmlns="http://www.w3.org/2000/svg"><title>Instagram</title><defs><radialGradient id="insta-gradient" cx="0.3" cy="1" r="1"><stop offset="0" stop-color="#FDCB52"/><stop offset="0.5" stop-color="#FD1D1D"/><stop offset="1" stop-color="#833AB4"/></radialGradient></defs><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.784.305-1.455.717-2.126 1.387C1.333 2.705.92 3.377.63 4.14.333 4.905.132 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.26 2.148.558 2.913.306.784.717 1.455 1.387 2.126.67.67 1.342 1.076 2.126 1.387.766.296 1.636.497 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.784-.305 1.455-.718 2.126-1.387.67-.67 1.076-1.342 1.387-2.126.296-.765.497-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.148-.558-2.913-.305-.784-.718-1.455-1.387-2.126C21.295 1.334 20.623.92 19.86.63c-.765-.297-1.636-.498-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.07 1.17.05 1.805.248 2.227.415.562.217.96.477 1.382.896.419.42.679.82.896 1.383.167.422.365 1.057.413 2.227.056 1.265.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.048 1.17-.248 1.805-.413 2.227-.217.562-.477.96-.896 1.382-.42.419-.82.679-1.383.896-.422.167-1.057.365-2.227.413-1.265.056-1.646.07-4.85.07s-3.585-.015-4.85-.07c-1.17-.048-1.805-.248-2.227-.413-.562-.217-.96-.477-1.382-.896-.419-.42-.679-.82-.896-1.383-.167-.422-.365-1.057-.413-2.227-.056-1.265-.07-1.646-.07-4.85s.015-3.585.07-4.85c.048-1.17.248-1.805.413-2.227.217-.562.477.96.896-1.382.42-.419.82-.679 1.383-.896.422-.167 1.057-.365 2.227-.413C8.415 2.176 8.797 2.16 12 2.16zm0 5.48c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7.16c-1.473 0-2.66-1.187-2.66-2.66s1.187-2.66 2.66-2.66 2.66 1.187 2.66 2.66-1.187 2.66-2.66 2.66zm6.336-7.74c-.777 0-1.406.63-1.406 1.406s.63 1.406 1.406 1.406 1.406-.63 1.406-1.406c0-.777-.63-1.406-1.406-1.406z"/></svg></div>
+        <div class="floating-icon icon-facebook"><svg role="img" viewBox="0 0 24 24" fill="#1877F2" xmlns="http://www.w3.org/2000/svg"><title>Facebook</title><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></div>
+
+        <header>
+            <div class="logo">Miss<span>Provider - Downloader</span></div>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider"></div>
+                </label>
+            </div>
+        </header>
+
+        <div id="intro" class="main-content">
+            <h1>Miss Provider<span class="highlight">Video</span> Downloader</h1>
+            <p>Try this unique tool for quick, hassle-free downloads from YouTube, Facebook, Instagram and X. Transform your offline video collection with this reliable and efficient downloader.</p>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M6.354 5.5H4a3 3 0 0 0 0 6h3a3 3 0 0 0 2.83-4H9c-.086 0-.17.01-.25.031A2 2 0 0 1 7 10.5H4a2 2 0 1 1 0-4h1.535c.218-.376.495-.714.82-1z"/><path d="M9 5.5a3 3 0 0 0-2.83 4h1.098A2 2 0 0 1 9 6.5h3a2 2 0 1 1 0 4h-1.535a4.02 4.02 0 0 1-.82 1H12a3 3 0 1 0 0-6H9z"/></svg></span>
+                <input id="videoUrl" type="url" placeholder="Paste Link Here">
+                <div class="input-actions">
+                    <button id="pasteBtn" title="Paste from clipboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg></button>
+                    <button id="clearBtn" title="Clear input"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg></button>
+                </div>
+                <button id="fetchBtn" class="search-btn">Search</button>
+            </div>
+        </div>
+
+        <!-- Results will be injected here -->
+        <div id="loader" class="hidden"></div>
+        <div id="results" class="hidden"></div>
+        
+        <footer id="footer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0ZM4.5 7.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7Zm0 2a.5.5 0 0 1 0-1h5a.5.5 0 0 1 0 1h-5Z"/></svg>
+            <span>Miss Provider</span>
+        </footer>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const getEl = (id) => document.getElementById(id);
+        const toggleSwitch = getEl('checkbox');
+        const fetchBtn = getEl('fetchBtn');
+        const videoUrlInput = getEl('videoUrl');
+        const pasteBtn = getEl('pasteBtn');
+        const clearBtn = getEl('clearBtn');
+        const loader = getEl('loader');
+        const resultsContainer = getEl('results');
+        const introContent = getEl('intro');
+        const footer = getEl('footer');
+
+        // --- THEME LOGIC ---
+        const applyTheme = (theme) => {
+            document.body.className = theme;
+            localStorage.setItem('theme', theme);
+            toggleSwitch.checked = theme === 'light-theme';
+        };
+        toggleSwitch.addEventListener('change', (e) => applyTheme(e.target.checked ? 'light-theme' : 'dark-theme'));
+        applyTheme(localStorage.getItem('theme') || 'dark-theme');
+
+        // --- TOAST NOTIFICATION LOGIC ---
+        const showToast = (message, type = 'success') => {
+            const toastContainer = getEl('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.5s forwards';
+                toast.addEventListener('animationend', () => toast.remove());
+            }, 3000);
+        };
+
+        // --- INPUT ACTIONS ---
+        pasteBtn.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                videoUrlInput.value = text;
+                showToast('Pasted from clipboard!', 'success');
+            } catch (err) {
+                showToast('Failed to read clipboard.', 'error');
+            }
+        });
+        clearBtn.addEventListener('click', () => { videoUrlInput.value = ''; });
+
+        // --- API & FETCH LOGIC ---
+fetchBtn.addEventListener('click', handleFetch);
+        videoUrlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleFetch();
+        });
+
+        async function handleFetch() {
+            const url = videoUrlInput.value.trim();
+            if (!url) {
+                showToast('Please paste a video link.', 'error');
+                return;
+            }
+
+            setLoadingState(true);
+
+            try {
+                const apiUrl = `https://nepcoderapis.pages.dev/api/v1/video/download?url=${encodeURIComponent(url)}`;
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+                const data = await response.json();
+                if (data.statusCode !== 200 || !data.medias) throw new Error(data.message || 'Failed to fetch video details.');
+                
+                displayResults(data);
+                showToast('Video details fetched!', 'success');
+
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                showToast(error.message, 'error');
+                resetUI();
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        function setLoadingState(isLoading) {
+            if (isLoading) {
+                fetchBtn.disabled = true;
+                fetchBtn.textContent = 'Searching...';
+                loader.classList.remove('hidden');
+                resultsContainer.classList.add('hidden');
+                resultsContainer.innerHTML = '';
+                introContent.classList.add('hidden');
+                footer.classList.add('hidden');
+            } else {
+                fetchBtn.disabled = false;
+                fetchBtn.textContent = 'Search';
+                loader.classList.add('hidden');
+            }
+        }
+
+        function resetUI() {
+            introContent.classList.remove('hidden');
+            footer.classList.remove('hidden');
+        }
+
+        // --- DISPLAY LOGIC ---
+        function displayResults(data) {
+            resultsContainer.innerHTML = `
+                <div class="video-info-card">
+                    <img src="${data.thumbnail}" alt="Video Thumbnail" onerror="this.style.display='none'">
+                    <div class="details">
+                        <h3>${data.title}</h3>
+                        <p>Duration: ${formatTime(data.duration)}</p>
+                    </div>
+                </div>
+                <div id="playerContainer"></div>
+                <div class="formats-container" id="video-formats-container">
+                    <h4>Video Formats (MP4)</h4>
+                    <div class="format-list" id="videoList"></div>
+                </div>
+                <div class="formats-container" id="audio-formats-container">
+                    <h4>Audio Formats</h4>
+                    <div class="format-list" id="audioList"></div>
+                </div>
+            `;
+
+            const videoList = getEl('videoList');
+            const audioList = getEl('audioList');
+            const mp4Videos = data.medias.filter(m => m.type === 'video' && m.ext === 'mp4');
+            const audios = data.medias.filter(m => m.type === 'audio');
+
+            if (mp4Videos.length > 0) {
+                mp4Videos.forEach(media => videoList.appendChild(createFormatItem(media)));
+            } else {
+                getEl('video-formats-container').innerHTML += `<p class="empty-state">No MP4 video formats found.</p>`;
+            }
+
+            if (audios.length > 0) {
+                audios.forEach(media => audioList.appendChild(createFormatItem(media)));
+            } else {
+                getEl('audio-formats-container').innerHTML += `<p class="empty-state">No audio formats found.</p>`;
+            }
+
+            resultsContainer.classList.remove('hidden');
+            footer.classList.remove('hidden');
+        }
+
+        function createFormatItem(media) {
+            const item = document.createElement('div');
+            item.className = 'format-item';
+            let label = media.label || 'Unknown';
+            if (media.type === 'video' && media.height) label = `${media.height}p`;
+
+            item.innerHTML = `
+                <div>
+                    <div class="label">${label} (${media.ext.toUpperCase()})</div>
+                    <div class="quality">${media.quality || ''}</div>
+                </div>
+                <div class="actions">
+                    <button class="play-btn">❚❚</button>
+                    <a href="${media.url}" class="download-btn" target="_blank" download>Download</a>
+                </div>
+            `;
+            item.querySelector('.play-btn').addEventListener('click', () => playMedia(media));
+            return item;
+        }
+
+        let activeMediaElement = null;
+        function playMedia(media) {
+            const playerContainer = getEl('playerContainer');
+            if (activeMediaElement) {
+                activeMediaElement.pause();
+                activeMediaElement.remove();
+            }
+            
+            const isVideo = media.type === 'video';
+            const el = document.createElement(isVideo ? 'video' : 'audio');
+            el.controls = true;
+            el.autoplay = true;
+            el.src = media.url;
+            
+            el.addEventListener('error', () => {
+                showToast('Playback failed. Try downloading instead.', 'error');
+                el.remove();
+            });
+
+            playerContainer.innerHTML = '';
+            playerContainer.appendChild(el);
+            activeMediaElement = el;
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            return new Date(seconds * 1000).toISOString().substr(14, 5);
+        }
+    </script>
+</body>
+  </html>
